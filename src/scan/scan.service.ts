@@ -117,7 +117,7 @@ export class ScanService {
 
   async updateById(id_qr: string, user: User): Promise<Scan> {
     const isActiveQR = await this.ScanModel.findById(id_qr);
-    if (!isActiveQR) throw new NotFoundException('qr code unavaible');
+    if (!isActiveQR.active) throw new NotFoundException('qr code unavaible');
 
     return await this.ScanModel.findByIdAndUpdate(
       id_qr,
