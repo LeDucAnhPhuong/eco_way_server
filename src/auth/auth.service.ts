@@ -20,7 +20,7 @@ export class AuthService {
     @InjectModel(Product.name)
     private productModel: Model<Product>,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   async signUp(signUpDto: SignUpDto): Promise<{ token: string }> {
     const { name, email, password } = signUpDto;
@@ -64,7 +64,11 @@ export class AuthService {
   }
   async isAdmin(user: User) {
     const { name, email } = user;
-    return { user: { name, email }, message: 'login success', isAdmin: true };
+    return {
+      user: { name, email },
+      message: 'login success',
+      isAdmin: user.role === 'admin',
+    };
   }
 
   async getProfile(user: User) {
