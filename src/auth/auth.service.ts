@@ -62,6 +62,10 @@ export class AuthService {
     const { name, email } = user;
     return { user: { name, email }, message: 'login success' };
   }
+  async isAdmin(user: User) {
+    const { name, email } = user;
+    return { user: { name, email }, message: 'login success', isAdmin: true };
+  }
 
   async getProfile(user: User) {
     const scan = await this.scanModel.find({ id_user: user._id });

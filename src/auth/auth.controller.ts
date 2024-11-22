@@ -23,6 +23,11 @@ export class AuthController {
   isAuth(@Req() req) {
     return this.authService.isAuth(req.user);
   }
+  @Get('check-admin')
+  @UseGuards(AuthGuard())
+  isAdmin(@Req() req) {
+    return this.authService.isAdmin(req.user);
+  }
 
   @Get('get-profile')
   @UseGuards(AuthGuard())
