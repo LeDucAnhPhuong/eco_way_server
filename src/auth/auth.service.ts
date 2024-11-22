@@ -20,7 +20,7 @@ export class AuthService {
     @InjectModel(Product.name)
     private productModel: Model<Product>,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async signUp(signUpDto: SignUpDto): Promise<{ token: string }> {
     const { name, email, password } = signUpDto;

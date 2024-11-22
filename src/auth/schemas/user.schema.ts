@@ -6,8 +6,6 @@ import { Document, Types, SchemaTypes } from 'mongoose';
   _id: true,
 })
 export class User extends Document {
-  @Prop({ type: SchemaTypes.ObjectId, ref: User.name })
-  _id: Types.ObjectId;
   @Prop()
   name: string;
 
