@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -14,7 +15,9 @@ import { CreateScantDto } from './dto/create-scan.dto';
 import { Product } from 'src/product/schemas/product.schema';
 import * as QRCode from 'qrcode';
 import { v2 as cloudinary } from 'cloudinary';
-import { v4 as uuidv4 } from 'uuid';
+import { JWT } from 'google-auth-library';
+import { firstValueFrom } from 'rxjs';
+import { HttpService } from '@nestjs/axios';
 @Injectable()
 export class ScanService {
   constructor(
@@ -24,12 +27,25 @@ export class ScanService {
     private ProductModel: mongoose.Model<Product>,
     @InjectModel(User.name)
     private UserModel: mongoose.Model<User>,
+    private authClient: JWT,
+    @Inject('ACCESS_TOKEN') private accessToken: string,
+    private readonly httpService: HttpService,
   ) {
     cloudinary.config({
       cloud_name: 'dumecudpk',
       api_key: '586263643843161',
       api_secret: process.env.CLOULDINARY_API_KEY,
     });
+  }
+
+  async getAccessToken(): Promise<string | null> {
+    try {
+      const tokens = await this.authClient.getAccessToken();
+      return tokens.token || null;
+    } catch (error) {
+      console.error('Error getting access token:', error);
+      throw error;
+    }
   }
 
   async uploadImage(base64: string): Promise<string> {
@@ -48,7 +64,9 @@ export class ScanService {
     });
   }
   async generateQRCode(url: mongoose.Types.ObjectId) {
-    const image = await QRCode.toDataURL(String(url));
+    const image = await QRCode.toDataURL(
+      String(`https://eco-way.vercel.app/scan/${url}`),
+    );
     const src = this.uploadImage(image);
     return src;
   }
@@ -72,12 +90,47 @@ export class ScanService {
       .skip(skip);
     return books;
   }
-  async create(scan: CreateScantDto, user: User): Promise<Scan> {
+
+  async fetchProtectedData(data: any): Promise<any> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(process.env.ASSET_PRIVATE_MODEL, data, {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`, // Truyền access token vào header
+          },
+        }),
+      );
+      return response.data; // Trả về dữ liệu từ API
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async create(base64String: string, user: User): Promise<Scan> {
     if (user.role !== 'admin')
       throw new UnauthorizedException('Just admin can access this endpoint');
-    if (!scan.success) throw new NotFoundException('Not find product');
+    let data;
+    const input = {
+      instances: [
+        {
+          image_bytes: {
+            b64: base64String.replace(/^data:image\/\w+;base64,/, ''),
+          },
+        },
+      ],
+    };
+    try {
+      data = await this.fetchProtectedData(input);
+    } catch (error) {
+      this.accessToken = await this.getAccessToken();
+      try {
+        data = await this.fetchProtectedData(input);
+      } catch (error) {}
+    }
+    const res_model = data?.predictions?.[0];
+    if (!res_model?.success) throw new NotFoundException('Not find product');
     const product = await this.ProductModel.findOne({
-      name: scan.detected_label,
+      label: res_model?.label,
     });
     try {
       const id_qr = new mongoose.Types.ObjectId();
@@ -89,6 +142,9 @@ export class ScanService {
           _id: id_qr,
           active: true,
           qr_url,
+          image_url: res_model?.processed_image,
+          label: res_model?.label,
+          isSuccess: res_model?.success,
         },
         { user: user._id },
       );

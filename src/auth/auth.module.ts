@@ -9,6 +9,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { UserSchema } from './schemas/user.schema';
 import { ScanSchema } from 'src/scan/schemas/scan.schema';
 import { ProductSchema } from 'src/product/schemas/product.schema';
+import { SizeSchema } from 'src/size/schemas/size.schema';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ProductSchema } from 'src/product/schemas/product.schema';
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
     MongooseModule.forFeature([{ name: 'Scan', schema: ScanSchema }]),
     MongooseModule.forFeature([{ name: 'Product', schema: ProductSchema }]),
+    MongooseModule.forFeature([{ name: 'Size', schema: SizeSchema }]),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

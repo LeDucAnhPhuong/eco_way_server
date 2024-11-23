@@ -5,19 +5,20 @@ import {
   Get,
   Param,
   Post,
-  Put,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ScanService } from './scan.service';
-import { CreateScantDto } from './dto/create-scan.dto';
-import { UpdateProductDto } from './dto/update-scan.dto';
 import { Scan } from './schemas/scan.schema';
 
 import { Query as ExpressQuery } from 'express-serve-static-core';
 import { AuthGuard } from '@nestjs/passport';
-
+import { FileInterceptor } from '@nestjs/platform-express';
+import * as path from 'path';
+import * as fs from 'fs';
 @Controller('api/scan')
 export class ScanController {
   constructor(private scanService: ScanService) {}
@@ -29,12 +30,9 @@ export class ScanController {
 
   @Post()
   @UseGuards(AuthGuard())
-  async createScan(
-    @Body()
-    scan: CreateScantDto,
-    @Req() req,
-  ): Promise<Scan> {
-    return this.scanService.create(scan, req.user);
+  async createScan(@Body() base_64, @Req() req): Promise<Scan> {
+    console.log('first', base_64);
+    return this.scanService.create(base_64.image_b64, req.user);
   }
 
   @Get(':id')

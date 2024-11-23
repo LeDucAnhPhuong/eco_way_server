@@ -28,6 +28,14 @@ export class Scan {
   @Prop()
   updatedAt: Date;
 
+  @Prop()
+  image_url: string;
+
+  @Prop()
+  label: string;
+  @Prop()
+  isSuccess: boolean;
+
   @Prop({ required: true })
   active: boolean;
 }

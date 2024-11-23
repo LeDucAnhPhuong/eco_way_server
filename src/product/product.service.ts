@@ -11,6 +11,8 @@ import { Query } from 'express-serve-static-core';
 import { User } from '../auth/schemas/user.schema';
 import { Size } from 'src/size/schemas/size.schema';
 import { Plactis } from 'src/plactis/schemas/plactis.schema';
+import { CreateProductDto } from './dto/create-product.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductService {
@@ -43,8 +45,17 @@ export class ProductService {
     return books;
   }
 
-  async create(product: Product, user: User): Promise<Product> {
-    const data = Object.assign(product, { user: user._id });
+  removeAccents(str) {
+    return str
+      .normalize('NFD') // Chuyển đổi chuỗi thành dạng Normalization Form D (NFD)
+      .replace(/[\u0300-\u036f]/g, ''); // Loại bỏ các dấu kết hợp (combining marks)
+  }
+
+  async create(product: CreateProductDto, user: User): Promise<Product> {
+    const data = Object.assign(
+      { ...product, label: this.removeAccents(product.name) },
+      { user: user._id },
+    );
     const isExistSize = await this.SizeModel.exists({ name: data.size_name });
     const isExistPlactis = await this.PlactisModel.exists({
       name: data.plactis_name,
@@ -71,7 +82,7 @@ export class ProductService {
     return book;
   }
 
-  async updateById(id: string, size: Product): Promise<Product> {
+  async updateById(id: string, size: UpdateProductDto): Promise<Product> {
     return await this.ProductModel.findByIdAndUpdate(id, size, {
       new: true,
       runValidators: true,

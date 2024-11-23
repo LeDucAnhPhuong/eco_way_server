@@ -9,6 +9,7 @@ import { SignUpDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { Scan } from 'src/scan/schemas/scan.schema';
 import { Product } from 'src/product/schemas/product.schema';
+import { Size } from 'src/size/schemas/size.schema';
 
 @Injectable()
 export class AuthService {
@@ -19,8 +20,10 @@ export class AuthService {
     private scanModel: Model<Scan>,
     @InjectModel(Product.name)
     private productModel: Model<Product>,
+    @InjectModel(Size.name)
+    private sizeModel: Model<Size>,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   async signUp(signUpDto: SignUpDto): Promise<{ token: string }> {
     const { name, email, password } = signUpDto;
@@ -73,9 +76,12 @@ export class AuthService {
 
   async getProfile(user: User) {
     const scan = await this.scanModel.find({ id_user: user._id });
+    let totalPoint = 0;
     const historyScan = await Promise.all(
       scan.map(async (item) => {
         const product = await this.productModel.findById(item.id_product);
+        const size = await this.sizeModel.findOne({ name: product.size_name });
+        totalPoint += size.point;
         return {
           id_scan: item._id,
           product: product,
@@ -87,7 +93,9 @@ export class AuthService {
     const data = {
       user_name: user.name,
       user_email: user.email,
+      user_role: user.role,
       historyScan,
+      totalPoint,
     };
     return data;
   }

@@ -14,6 +14,9 @@ export class Product {
   @Prop({ unique: [true, 'Duplicate product name entered'] })
   name: string;
 
+  @Prop({ unique: [true, 'Duplicate product name entered'] })
+  label: string;
+
   @Prop()
   brand: string;
 
