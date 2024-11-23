@@ -31,7 +31,6 @@ export class ScanController {
   @Post()
   @UseGuards(AuthGuard())
   async createScan(@Body() base_64, @Req() req): Promise<Scan> {
-    console.log('first', base_64);
     return this.scanService.create(base_64.image_b64, req.user);
   }
 
